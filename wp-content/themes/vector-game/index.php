@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html <?php language_attributes(); ?>>
+<head>
+    <meta charset="<?php bloginfo( 'charset' ); ?>">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php bloginfo( 'name' ); ?> - Vector Game</title>
+    
+    <?php 
+    /* 
+    WHY wp_head()? 
+    This lets WordPress inject its scripts, styles, and other important stuff.
+    Without it, WordPress won't work properly.
+    */
+    wp_head(); 
+    ?>
+</head>
+<body <?php body_class(); ?>>
+
+    <?php 
+    /* 
+    WHY wp_body_open()?
+    This is a hook that lets WordPress and plugins add code right after <body>.
+    Modern best practice since WordPress 5.2.
+    */
+    wp_body_open(); 
+    ?>
+
+    <!-- Welcome Screen (Onboarding) -->
+    <div class="welcome-screen" id="welcome-screen">
+        <div class="welcome-content">
+            <div class="mobile-warning" id="mobile-warning" style="display: none;">
+                <p>📱 <strong>MOBILE DETECTED!</strong> Use on-screen buttons to play!</p>
+            </div>
+            <h1>🚀 VECTOR ASTEROIDS</h1>
+            <p class="subtitle">Classic arcade action in vector graphics!</p>
+            
+            <div class="welcome-instructions">
+                <h2>HOW TO PLAY</h2>
+                
+                <!-- Page 1: Controls -->
+                <div class="instruction-page" id="instruction-page-1" style="display: block;">
+                    <div class="instruction-grid">
+                        <div class="instruction">
+                            <span class="key">W / ↑</span>
+                            <span class="action">Thrust Forward</span>
+                        </div>
+                        <div class="instruction">
+                            <span class="key">S / ↓</span>
+                            <span class="action"><strong>Reverse Thrust (NEW!)</strong></span>
+                        </div>
+                        <div class="instruction">
+                            <span class="key">A / ←</span>
+                            <span class="action">Rotate Left</span>
+                        </div>
+                        <div class="instruction">
+                            <span class="key">D / →</span>
+                            <span class="action">Rotate Right</span>
+                        </div>
+                        <div class="instruction">
+                            <span class="key">SPACE</span>
+                            <span class="action">Fire Bullets</span>
+                        </div>
+                        <div class="instruction">
+                            <span class="key">ESC</span>
+                            <span class="action">Pause Menu</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Page 2: Scoring -->
+                <div class="instruction-page" id="instruction-page-2" style="display: none;">
+                    <div class="scoring-info">
+                        <h3>🎯 SCORING & OBJECTIVES</h3>
+                        <p>🔸 Large Asteroids = <strong>20 pts</strong></p>
+                        <p>🔹 Medium Asteroids = <strong>50 pts</strong></p>
+                        <p>⬢ Small Asteroids = <strong>100 pts</strong></p>
+                        <p>🎊 Every <strong>500 points</strong> = Level Up!</p>
+                        <p>🏆 Reach <strong>Level 80</strong> = WIN!</p>
+                        <p>💀 Lose all lives = Game Over</p>
+                    </div>
+                </div>
+
+                <!-- Page 3: Enemies & Power-ups -->
+                <div class="instruction-page" id="instruction-page-3" style="display: none;">
+                    <div class="scoring-info">
+                        <h3>⚔️ ENEMIES & POWER-UPS</h3>
+                        <p>🦈 <strong>Sharks spawn from Level 2!</strong></p>
+                        <p>💥 Sharks SHOOT red bullets!</p>
+                        <p>⚠️ Avoid shark contact & bullets!</p>
+                        <p>🔫 Shoot sharks to destroy them!</p>
+                        <p>💖 Collect <strong>Hearts</strong> for +1 life!</p>
+                        <p>❤️ Maximum 5 lives possible!</p>
+                    </div>
+                </div>
+
+                <!-- Page 4: Ships -->
+                <div class="instruction-page" id="instruction-page-4" style="display: none;">
+                    <div class="scoring-info">
+                        <h3>🚀 SHIP SELECTION</h3>
+                        <p>⚡ <strong>SPEED DEMON:</strong> Fast, strong bullets, weak defense</p>
+                        <p>🛡️ <strong>TANK:</strong> Slow, high defense, <strong>immune to asteroids!</strong></p>
+                        <p>⚖️ <strong>BALANCED:</strong> Medium stats, starts with 3 lives</p>
+                        <p>💡 Each ship has unique abilities!</p>
+                        <p>🎮 Select your ship after clicking START!</p>
+                    </div>
+                </div>
+                
+                <!-- Page Navigation -->
+                <div class="page-navigation">
+                    <span class="page-indicator" id="page-indicator">Page 1 of 4</span>
+                    <div class="nav-buttons-row">
+                        <button class="btn-nav btn-prev" onclick="previousInstructionPage()" id="btn-prev-page" disabled>◀ PREV</button>
+                        <button class="btn-nav btn-next" onclick="nextInstructionPage()" id="btn-next-page">NEXT ▶</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="welcome-nav-buttons">
+                <button class="btn-start btn-huge" onclick="showShipSelection()">▶️ START GAME</button>
+                <div class="secondary-buttons">
+                    <button class="btn-leaderboard" onclick="toggleLeaderboard()">📊 LEADERBOARD</button>
+                    <button class="btn-settings" onclick="showWelcomeSettings()">⚙️ SETTINGS</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Welcome Settings Menu -->
+    <div class="welcome-settings" id="welcome-settings">
+        <div class="settings-panel">
+            <h2>⚙️ GAME SETTINGS</h2>
+            <div class="level-selector">
+                <label for="start-level">Starting Level (1-80):</label>
+                <input type="number" id="start-level" min="1" max="80" value="1" />
+            </div>
+            <p class="settings-info">💡 Higher levels = more enemies + faster difficulty!</p>
+            <p class="settings-info">🏆 Level 80 is the MAXIMUM!</p>
+            <button class="btn-apply" onclick="applyWelcomeSettings()">✅ APPLY & START</button>
+            <button class="btn-cancel" onclick="hideWelcomeSettings()">❌ CANCEL</button>
+        </div>
+    </div>
+
+    <!-- Ship Selection Screen -->
+    <div class="ship-selection-screen" id="ship-selection-screen">
+        <div class="ship-selection-content">
+            <h1>🚀 SELECT YOUR SHIP</h1>
+            <p class="subtitle">Choose your fighter and dominate the asteroids!</p>
+            
+            <div class="ships-grid">
+                <!-- Ship 1: Speed Demon -->
+                <div class="ship-card" onclick="selectShip(1)">
+                    <div class="ship-icon">⚡</div>
+                    <h3>SPEED DEMON</h3>
+                    <div class="ship-stats">
+                        <p class="stat-good">✓ Fast Movement</p>
+                        <p class="stat-good">✓ Strong Bullets</p>
+                        <p class="stat-bad">✗ Weak Defense (1 hit = death)</p>
+                        <p class="stat-info">Starting Lives: <strong>5</strong></p>
+                    </div>
+                    <p class="ship-desc">High risk, high reward! Perfect for skilled players who can dodge.</p>
+                    <button class="btn-select">SELECT</button>
+                </div>
+
+                <!-- Ship 2: Tank -->
+                <div class="ship-card" onclick="selectShip(2)">
+                    <div class="ship-icon">🛡️</div>
+                    <h3>TANK</h3>
+                    <div class="ship-stats">
+                        <p class="stat-good">✓ High Defense (2 hits to die)</p>
+                        <p class="stat-good">✓ Immune to Asteroids</p>
+                        <p class="stat-bad">✗ Slow Bullets</p>
+                        <p class="stat-info">Starting Lives: <strong>5</strong></p>
+                    </div>
+                    <p class="ship-desc">For beginners! Take hits and keep going. Great for learning.</p>
+                    <button class="btn-select">SELECT</button>
+                </div>
+
+                <!-- Ship 3: Balanced -->
+                <div class="ship-card" onclick="selectShip(3)">
+                    <div class="ship-icon">⚔️</div>
+                    <h3>BALANCED</h3>
+                    <div class="ship-stats">
+                        <p class="stat-good">✓ Balanced Speed</p>
+                        <p class="stat-good">✓ Balanced Damage</p>
+                        <p class="stat-bad">✗ Only 3 Starting Lives</p>
+                        <p class="stat-info">Starting Lives: <strong>3</strong></p>
+                    </div>
+                    <p class="ship-desc">The middle ground. Good at everything, master of balance.</p>
+                    <button class="btn-select">SELECT</button>
+                </div>
+            </div>
+
+            <button class="btn-back" onclick="backToWelcome()">BACK</button>
+        </div>
+    </div>
+
+    <!-- Leaderboard Panel -->
+    <div class="leaderboard-panel" id="leaderboard-panel">
+        <div class="leaderboard-content">
+            <h2>🏆 LEADERBOARD</h2>
+            
+            <div class="leaderboard-filters">
+                <button class="filter-btn active" data-filter="all">All Time</button>
+                <button class="filter-btn" data-filter="today">Today</button>
+                <button class="filter-btn" data-filter="week">This Week</button>
+            </div>
+            
+            <div class="leaderboard-list" id="leaderboard-list">
+                <div class="loading">Loading scores...</div>
+            </div>
+            
+            <button class="btn-close" onclick="toggleLeaderboard()">CLOSE</button>
+        </div>
+    </div>
+
+    <!-- Level Up Celebration -->
+    <div class="level-up-modal" id="level-up-modal">
+        <div class="level-up-content">
+            <h1>🎉 LEVEL UP!</h1>
+            <p class="level-number">LEVEL <span id="level-up-number">2</span></p>
+            <p class="congrats-message">Outstanding, Commander!</p>
+            <p class="continue-message">Get ready for more asteroids...</p>
+        </div>
+    </div>
+
+    <!-- Game UI Overlay -->
+    <div class="game-ui">
+        <div class="stat">SCORE: <span id="score">0</span></div>
+        <div class="stat">LIVES: <span id="lives">3</span></div>
+        <div class="stat">LEVEL: <span id="level">1</span></div>
+        <button class="btn-leaderboard-mini" onclick="toggleLeaderboard()">📊</button>
+        <button class="btn-settings-mini" onclick="showInGameSettings()" title="Game Settings">⚙️</button>
+    </div>
+    
+    <!-- In-Game Settings Menu -->
+    <div class="in-game-settings" id="in-game-settings">
+        <div class="settings-panel">
+            <h2>⚙️ GAME SETTINGS</h2>
+            <button class="btn-settings-action" id="pause-resume-btn" onclick="togglePause()">⏸️ PAUSE</button>
+            <button class="btn-settings-action" onclick="quitGameWithConfirm()">🚪 QUIT GAME</button>
+            <button class="btn-settings-action btn-cancel" onclick="hideInGameSettings()">✖️ CLOSE</button>
+        </div>
+    </div>
+
+    <!-- The Canvas (where the game renders) -->
+    <canvas id="game-canvas"></canvas>
+
+    <!-- Game Over Screen -->
+    <div class="game-over" id="game-over">
+        <h1>💥 GAME OVER</h1>
+        <p class="final-stats">Final Score: <span id="final-score">0</span></p>
+        <p class="final-stats">Level Reached: <span id="final-level">1</span></p>
+        <div class="game-over-actions">
+            <button class="btn-restart" onclick="restartGame()">PLAY AGAIN</button>
+            <button class="btn-leaderboard" onclick="toggleLeaderboard()">VIEW LEADERBOARD</button>
+        </div>
+    </div>
+
+    <!-- Settings Menu (ESC key) -->
+    <div class="settings-menu" id="settings-menu">
+        <div class="settings-content">
+            <h2>⚙️ GAME PAUSED</h2>
+            <p class="settings-hint">Press ESC again to resume</p>
+            <button class="btn-setting" onclick="resumeGame()">▶️ RESUME</button>
+            <button class="btn-setting" onclick="changeShip()">🚀 CHANGE SHIP</button>
+            <button class="btn-setting" onclick="quitGame()">❌ QUIT TO MENU</button>
+        </div>
+    </div>
+
+    <?php 
+    /* 
+    WHY wp_footer()?
+    This lets WordPress inject scripts at the bottom of the page.
+    Our game.js will be loaded here.
+    CRITICAL: Without this, no JavaScript will load!
+    */
+    wp_footer(); 
+    ?>
+</body>
+</html>
+
