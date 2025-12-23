@@ -156,7 +156,7 @@ None currently! All reported bugs have been fixed.
 
 GPL v2 or later (WordPress compatible)
 
-## 👤 Author
+## 👤 Author:JIM-HILARY
 
 Built with ❤️ and persistence.
 
