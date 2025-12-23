@@ -1797,10 +1797,9 @@ window.addEventListener('DOMContentLoaded', () => {
        ======================================== */
     
     // 🎵 Background music - plays only during gameplay
-    // GitHub Pages version - use relative path (audio file must be in /assets/audio.mp3)
-    const themeUrl = window.location.origin;
-    const bgMusic = new Audio(themeUrl + '/assets/audio.mp3');
-    // Note: If audio file doesn't exist, music will fail silently (game still works)
+    // GitHub Pages version - use relative path
+    const bgMusic = new Audio('assets/audio.mp3');
+    // Note: Audio file is in docs/assets/audio.mp3
     bgMusic.loop = true;  // Loop the 23-minute track
     bgMusic.volume = 0.35;  // 35% volume (subtle, not overpowering)
     bgMusic.preload = 'auto';
