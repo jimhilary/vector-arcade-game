@@ -1618,6 +1618,7 @@ window.addEventListener('DOMContentLoaded', () => {
             console.error('✗ AJAX error:', error);
             alert('Network error while submitting score. Please check your connection.');
         });
+        */
     }
     
     /* ========================================
