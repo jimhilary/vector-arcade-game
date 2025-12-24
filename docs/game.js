@@ -1797,16 +1797,18 @@ window.addEventListener('DOMContentLoaded', () => {
        ======================================== */
     
     // 🎵 Background music - plays only during gameplay
-    // GitHub Pages version - use correct relative path
-    // Try relative path first, then absolute if needed
+    // Hosted on Internet Archive (free, no bandwidth limits, works on GitHub Pages)
+    // Direct download URL: https://archive.org/download/audio_20251224/audio.mp3
     let bgMusic;
     try {
-        bgMusic = new Audio('assets/audio.mp3');
-        // Add error listener to detect 404
+        bgMusic = new Audio('https://archive.org/download/audio_20251224/audio.mp3');
+        // Add error listener for debugging
         bgMusic.addEventListener('error', function(e) {
-            console.error('❌ Audio file not found at: assets/audio.mp3');
-            console.error('Expected location: https://jimhilary.github.io/vector-arcade-game/assets/audio.mp3');
-            console.warn('💡 Audio file is too large (19MB) and may not be on GitHub yet');
+            console.error('❌ Audio file failed to load from Internet Archive');
+            console.error('URL: https://archive.org/download/audio_20251224/audio.mp3');
+        });
+        bgMusic.addEventListener('loadeddata', function() {
+            console.log('✅ Background music loaded successfully from Internet Archive');
         });
     } catch (e) {
         console.error('Failed to create Audio object:', e);
