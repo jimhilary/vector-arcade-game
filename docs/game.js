@@ -1825,55 +1825,66 @@ window.addEventListener('DOMContentLoaded', () => {
             // 🔥 FIX: Use relative path to local audio file (GitHub Pages)
             // Try multiple possible paths in case of deployment differences
             const audioPaths = [
-                'assets/audio.mp3',           // GitHub Pages root
+                'assets/audio.mp3',           // GitHub Pages root (most common)
                 './assets/audio.mp3',          // Relative from current directory
                 '/assets/audio.mp3',           // Absolute from root
                 'docs/assets/audio.mp3',       // If in subdirectory
                 './docs/assets/audio.mp3'      // Relative docs path
             ];
             
-            // Use the first path (most common for GitHub Pages)
-            const audioPath = audioPaths[0];
+            // Track which path we're trying
+            let currentPathIndex = 0;
+            const audioPath = audioPaths[currentPathIndex];
+            
+            console.log(`🎵 Attempting to load audio from: ${audioPath}`);
             
             // Create new audio object
             bgMusic = new Audio(audioPath);
             
             // Add error listener with retry logic
-            bgMusic.addEventListener('error', function(e) {
+            function handleAudioError(e) {
                 audioLoadAttempts++;
                 const errorCode = bgMusic.error ? bgMusic.error.code : 'unknown';
                 const errorMessage = bgMusic.error ? bgMusic.error.message : 'Unknown error';
                 
-                console.error(`❌ Audio file failed to load (attempt ${audioLoadAttempts}/${MAX_AUDIO_RETRIES})`);
+                console.error(`❌ Audio file failed to load (attempt ${audioLoadAttempts})`);
                 console.error(`Path tried: ${audioPath}`);
                 console.error(`Error code: ${errorCode} (${errorMessage})`);
                 
                 // Try next path if current one failed
-                if (audioLoadAttempts < audioPaths.length) {
-                    console.log(`🔄 Trying next audio path: ${audioPaths[audioLoadAttempts]}`);
-                    const nextPath = audioPaths[audioLoadAttempts];
+                if (currentPathIndex < audioPaths.length - 1) {
+                    currentPathIndex++;
+                    const nextPath = audioPaths[currentPathIndex];
+                    console.log(`🔄 Trying next audio path: ${nextPath}`);
+                    
+                    // Create new audio with next path
                     bgMusic = new Audio(nextPath);
                     bgMusic.loop = true;
                     bgMusic.volume = 0.35;
                     bgMusic.preload = 'auto';
                     window._bgMusic = bgMusic;
+                    
                     // Re-attach error listener
-                    bgMusic.addEventListener('error', arguments.callee);
+                    bgMusic.addEventListener('error', handleAudioError);
                     return;
                 }
                 
-                // Retry loading if we haven't exceeded max attempts
+                // Reset path index and retry from beginning if we haven't exceeded max attempts
                 if (audioLoadAttempts < MAX_AUDIO_RETRIES) {
-                    console.log(`🔄 Retrying audio load in 2 seconds...`);
+                    currentPathIndex = 0; // Reset to first path
+                    console.log(`🔄 Retrying audio load from beginning in 2 seconds...`);
                     setTimeout(() => {
                         initializeAudio();
                     }, 2000);
                 } else {
                     console.error('❌ Audio failed to load after multiple attempts. Music will be disabled.');
                     console.error('💡 Make sure assets/audio.mp3 exists in your GitHub Pages deployment.');
+                    console.error('💡 Check browser Network tab to verify file is accessible.');
                     bgMusic = null;
                 }
-            });
+            }
+            
+            bgMusic.addEventListener('error', handleAudioError);
             
             bgMusic.addEventListener('loadeddata', function() {
                 console.log(`✅ Background music loaded successfully from: ${bgMusic.src}`);
