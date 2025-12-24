@@ -91,6 +91,44 @@ window.pauseMusic = pauseMusic;
 window.stopMusic = stopMusic;
 
 /* ========================================
+   🎵 LAZY LOAD BASE64 AUDIO (Memory-Safe)
+   ======================================== */
+
+// 🔥 FIX: Load Base64 audio only after user interaction
+// This prevents memory spike during page load (causes crashes on mobile)
+let audioLoaded = false;
+
+function loadBase64AudioOnce() {
+    if (audioLoaded) return;
+    audioLoaded = true;
+    
+    console.log('🎵 Loading Base64 audio after user interaction...');
+    
+    const script = document.createElement('script');
+    script.src = 'audio-base64.js';
+    script.onload = () => {
+        if (window.AUDIO_BASE64) {
+            window._bgMusic = new Audio(window.AUDIO_BASE64);
+            window._bgMusic.loop = true;
+            window._bgMusic.volume = 0.35;
+            window._bgMusic.preload = 'auto';
+            console.log('✅ Base64 audio loaded and ready');
+        } else {
+            console.error('❌ AUDIO_BASE64 not found after loading script');
+        }
+    };
+    script.onerror = () => {
+        console.error('❌ Failed to load audio-base64.js');
+    };
+    document.body.appendChild(script);
+}
+
+// Trigger audio loading on first user interaction
+window.addEventListener('pointerdown', loadBase64AudioOnce, { once: true });
+window.addEventListener('touchstart', loadBase64AudioOnce, { once: true });
+window.addEventListener('click', loadBase64AudioOnce, { once: true });
+
+/* ========================================
    IN-GAME SETTINGS (DEFINED FIRST - AVAILABLE IMMEDIATELY!)
    ======================================== */
 
@@ -1878,10 +1916,24 @@ window.addEventListener('DOMContentLoaded', () => {
     window._bgMusic = bgMusic;
     
     // ▶️ Play music (user gesture safe)
+    // 🔥 FIX: Use window._bgMusic (lazy-loaded) instead of local bgMusic
     window.playMusic = function () {
-        if (!bgMusic) return;
-        if (bgMusic.paused) {
-            bgMusic.play().catch(err => {
+        // Ensure audio is loaded first
+        if (!audioLoaded) {
+            loadBase64AudioOnce();
+            // Wait a bit for audio to load, then try again
+            setTimeout(() => {
+                if (window._bgMusic && window._bgMusic.paused) {
+                    window._bgMusic.play().catch(err => {
+                        console.warn('🎵 Music play blocked:', err.message);
+                    });
+                }
+            }, 500);
+            return;
+        }
+        
+        if (window._bgMusic && window._bgMusic.paused) {
+            window._bgMusic.play().catch(err => {
                 console.warn('🎵 Music play blocked:', err.message);
             });
         }
@@ -1889,16 +1941,16 @@ window.addEventListener('DOMContentLoaded', () => {
     
     // ⏸ Pause music
     window.pauseMusic = function () {
-        if (bgMusic && !bgMusic.paused) {
-            bgMusic.pause();
+        if (window._bgMusic && !window._bgMusic.paused) {
+            window._bgMusic.pause();
         }
     };
     
     // ⏹ Stop music
     window.stopMusic = function () {
-        if (bgMusic) {
-            bgMusic.pause();
-            bgMusic.currentTime = 0;
+        if (window._bgMusic) {
+            window._bgMusic.pause();
+            window._bgMusic.currentTime = 0;
         }
     };
     
