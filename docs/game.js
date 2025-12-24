@@ -275,6 +275,9 @@ window.quitGameWithConfirm = function() {
             console.log('Game object not available');
         }
         
+        // 🔥 FIX: Reset all UI overlays when quitting
+        resetUIOverlays();
+        
         // 🎵 Stop background music when quitting
         if (typeof window.stopMusic === 'function') {
             window.stopMusic();
@@ -396,6 +399,9 @@ window.backToWelcome = function() {
     if (typeof window.game !== 'undefined' && window.game) {
         window.game.state = 'welcome';
     }
+    
+    // 🔥 FIX: Reset all UI overlays when returning to welcome
+    resetUIOverlays();
     
     // 🎵 Stop background music when returning to welcome screen
     if (typeof stopMusic === 'function') {
@@ -2580,16 +2586,81 @@ window.addEventListener('DOMContentLoaded', () => {
     
     /**
      * Toggle leaderboard panel
+     * FIXED: Properly shows panel with display and z-index
      */
     window.toggleLeaderboard = function() {
         const panel = document.getElementById('leaderboard-panel');
-        panel.classList.toggle('active');
+        if (!panel) return;
         
-        // Load leaderboard when opening
-        if (panel.classList.contains('active')) {
+        const isActive = panel.classList.contains('active');
+        
+        // HARD reset
+        panel.classList.remove('active');
+        panel.style.display = 'none';
+        
+        if (!isActive) {
+            panel.classList.add('active');
+            panel.style.display = 'flex';   // 🔥 Force display
+            panel.style.zIndex = '9999';    // 🔥 Ensure above welcome screen
             loadLeaderboard('all');
         }
     };
+    
+    /**
+     * Reset all UI overlays when returning to welcome screen
+     * FIXED: Prevents panels from being stuck in hidden-but-active state
+     */
+    function resetUIOverlays() {
+        const leaderboard = document.getElementById('leaderboard-panel');
+        if (leaderboard) {
+            leaderboard.classList.remove('active');
+            leaderboard.style.display = 'none';
+        }
+        
+        const inGameSettings = document.getElementById('in-game-settings');
+        if (inGameSettings) {
+            inGameSettings.classList.remove('active');
+            inGameSettings.style.display = 'none';
+        }
+        
+        const welcomeSettings = document.getElementById('welcome-settings');
+        if (welcomeSettings) {
+            welcomeSettings.style.display = 'none';
+        }
+        
+        const levelUpModal = document.getElementById('level-up-modal');
+        if (levelUpModal) {
+            levelUpModal.style.display = 'none';
+        }
+    }
+    
+    /**
+     * Reset all UI overlays when returning to welcome screen
+     * FIXED: Prevents panels from being stuck in hidden-but-active state
+     */
+    function resetUIOverlays() {
+        const leaderboard = document.getElementById('leaderboard-panel');
+        if (leaderboard) {
+            leaderboard.classList.remove('active');
+            leaderboard.style.display = 'none';
+        }
+        
+        const inGameSettings = document.getElementById('in-game-settings');
+        if (inGameSettings) {
+            inGameSettings.classList.remove('active');
+            inGameSettings.style.display = 'none';
+        }
+        
+        const welcomeSettings = document.getElementById('welcome-settings');
+        if (welcomeSettings) {
+            welcomeSettings.style.display = 'none';
+        }
+        
+        const levelUpModal = document.getElementById('level-up-modal');
+        if (levelUpModal) {
+            levelUpModal.style.display = 'none';
+        }
+    }
     
     /**
      * Show leaderboard disabled message (fallback)
