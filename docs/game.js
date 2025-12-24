@@ -2600,8 +2600,9 @@ window.addEventListener('DOMContentLoaded', () => {
     
     /**
      * Load leaderboard from Supabase
+     * Made globally accessible for filter buttons
      */
-    async function loadLeaderboard(filter = 'all') {
+    window.loadLeaderboard = async function(filter = 'all') {
         const listEl = document.getElementById('leaderboard-list');
         if (!listEl) return;
         
