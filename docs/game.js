@@ -1899,21 +1899,10 @@ window.addEventListener('DOMContentLoaded', () => {
        ======================================== */
     
     // 🎵 Background music - Base64 embedded (100% reliable, no hosting issues)
-    // 🔥 FIX: Load Base64 from separate file to avoid bloating game.js
-    // The Base64 string is loaded from audio-base64.js (loaded before this script)
-    let bgMusic;
-    if (typeof window.AUDIO_BASE64 !== 'undefined' && window.AUDIO_BASE64) {
-        bgMusic = new Audio(window.AUDIO_BASE64);
-    } else {
-        console.error('❌ Audio Base64 not loaded! Make sure audio-base64.js is loaded before game.js');
-        bgMusic = null;
-    }
-    
-    bgMusic.loop = true;
-    bgMusic.volume = 0.35;
-    bgMusic.preload = 'auto';
-    
-    window._bgMusic = bgMusic;
+    // 🔥 FIX: Audio is lazy-loaded after user interaction (prevents memory spike on page load)
+    // The Base64 string is loaded dynamically via loadBase64AudioOnce() function
+    // window._bgMusic will be created when audio-base64.js loads (triggered by user interaction)
+    // DO NOT initialize here - let lazy loading handle it
     
     // ▶️ Play music (user gesture safe)
     // 🔥 FIX: Use window._bgMusic (lazy-loaded) instead of local bgMusic
