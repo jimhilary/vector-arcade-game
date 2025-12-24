@@ -1836,9 +1836,9 @@ window.addEventListener('DOMContentLoaded', () => {
        🎵 BACKGROUND MUSIC CONTROLLER
        ======================================== */
     
-    // 🎵 Background music - GitHub + jsDelivr CDN (production-ready)
+    // 🎵 Background music - GitHub Releases direct download (production-ready)
     let bgMusic = new Audio(
-        'https://cdn.jsdelivr.net/gh/jimhilary/vector-arcade-game@audio-v1/audio.mp3'
+        'https://github.com/jimhilary/vector-arcade-game/releases/download/audio-v1/audio.mp3'
     );
     
     bgMusic.loop = true;
