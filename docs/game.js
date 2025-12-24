@@ -1812,9 +1812,13 @@ window.addEventListener('DOMContentLoaded', () => {
         console.error('Failed to create Audio object:', e);
         bgMusic = null;
     }
-    bgMusic.loop = true;  // Loop the 23-minute track
-    bgMusic.volume = 0.35;  // 35% volume (subtle, not overpowering)
-    bgMusic.preload = 'auto';
+    
+    // Only set properties if bgMusic was created successfully
+    if (bgMusic) {
+        bgMusic.loop = true;  // Loop the 23-minute track
+        bgMusic.volume = 0.35;  // 35% volume (subtle, not overpowering)
+        bgMusic.preload = 'auto';
+    }
     
     // Make bgMusic globally accessible for stub functions
     window._bgMusic = bgMusic;
