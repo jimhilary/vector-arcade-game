@@ -2638,34 +2638,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     
     /**
-     * Reset all UI overlays when returning to welcome screen
-     * FIXED: Prevents panels from being stuck in hidden-but-active state
-     */
-    function resetUIOverlays() {
-        const leaderboard = document.getElementById('leaderboard-panel');
-        if (leaderboard) {
-            leaderboard.classList.remove('active');
-            leaderboard.style.display = 'none';
-        }
-        
-        const inGameSettings = document.getElementById('in-game-settings');
-        if (inGameSettings) {
-            inGameSettings.classList.remove('active');
-            inGameSettings.style.display = 'none';
-        }
-        
-        const welcomeSettings = document.getElementById('welcome-settings');
-        if (welcomeSettings) {
-            welcomeSettings.style.display = 'none';
-        }
-        
-        const levelUpModal = document.getElementById('level-up-modal');
-        if (levelUpModal) {
-            levelUpModal.style.display = 'none';
-        }
-    }
-    
-    /**
      * Show leaderboard disabled message (fallback)
      */
     window.showLeaderboardDisabled = function() {
