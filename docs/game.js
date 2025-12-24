@@ -1837,10 +1837,15 @@ window.addEventListener('DOMContentLoaded', () => {
        ======================================== */
     
     // 🎵 Background music - Base64 embedded (100% reliable, no hosting issues)
-    // 🔥 FIX: Embedded as data URI to avoid all MIME type and hosting problems
-    let bgMusic = new Audio(
-        'data:audio/mpeg;base64,SUQzBAAAAAAAf1RYWFgAAAASAAADbWFqb3JfYnJhbmQAZGFzaABUWFhYAAAAEQAAA21pbm9yX3ZlcnNpb24AMABUWFhYAAAAHAAAA2NvbXBhdGlibGVfYnJhbmRzAGlzbzZtcDQxAFRTU0UAAAAOAAADTGF2ZjYwLjMuMTAwAAAAAAAAAAAAAAD/+5AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABJbmZvAAAADwAAvOgBNGy8AAIFCAoMDxIVFxkcHyEjJiksLjAzNjg6PUBDRUdKTU9RVFdZXF5hZGZpa25wc3V4en2AgoWHioyPkZSXmZueoaOmqKuusLK1uLu9v8LFx8nMz9LU1tnc3uDj5unr7fDz9ff6/QAAAABMYXZjNjAuMy4AAAAAAAAAAAAAAAAAAAAAAAAAATRsvO3InqkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/+5IEAAAL8ABpAAAAAAAADSAAAAAAAAGkAAAAAAAANIAAAAD/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////...//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////+5IEAAAL8AA9gAAAAAAAB6AAAAAAAAEIAAAAAAAAIQAAAAD/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////'
-    );
+    // 🔥 FIX: Load Base64 from separate file to avoid bloating game.js
+    // The Base64 string is loaded from audio-base64.js (loaded before this script)
+    let bgMusic;
+    if (typeof window.AUDIO_BASE64 !== 'undefined' && window.AUDIO_BASE64) {
+        bgMusic = new Audio(window.AUDIO_BASE64);
+    } else {
+        console.error('❌ Audio Base64 not loaded! Make sure audio-base64.js is loaded before game.js');
+        bgMusic = null;
+    }
     
     bgMusic.loop = true;
     bgMusic.volume = 0.35;
