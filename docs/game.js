@@ -2613,8 +2613,9 @@ window.addEventListener('DOMContentLoaded', () => {
     /**
      * Reset all UI overlays when returning to welcome screen
      * FIXED: Prevents panels from being stuck in hidden-but-active state
+     * Made globally accessible so it can be called from anywhere
      */
-    function resetUIOverlays() {
+    window.resetUIOverlays = function() {
         const leaderboard = document.getElementById('leaderboard-panel');
         if (leaderboard) {
             leaderboard.classList.remove('active');
@@ -2636,7 +2637,7 @@ window.addEventListener('DOMContentLoaded', () => {
         if (levelUpModal) {
             levelUpModal.style.display = 'none';
         }
-    }
+    };
     
     /**
      * Show leaderboard disabled message (fallback)
