@@ -1837,8 +1837,9 @@ window.addEventListener('DOMContentLoaded', () => {
        ======================================== */
     
     // 🎵 Background music - GitHub Releases direct download (production-ready)
+    // 🔥 FIX: ?raw=1 forces correct MIME type (audio/mpeg instead of application/octet-stream)
     let bgMusic = new Audio(
-        'https://github.com/jimhilary/vector-arcade-game/releases/download/audio-v1/audio.mp3'
+        'https://github.com/jimhilary/vector-arcade-game/releases/download/audio-v1/audio.mp3?raw=1'
     );
     
     bgMusic.loop = true;
