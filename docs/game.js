@@ -1915,14 +1915,16 @@ window.addEventListener('DOMContentLoaded', () => {
     };
     
     window.pauseMusic = function() {
-        if (!bgMusic.paused) {
+        if (bgMusic && !bgMusic.paused) {
             bgMusic.pause();
         }
     };
     
     window.stopMusic = function() {
-        bgMusic.pause();
-        bgMusic.currentTime = 0;  // Reset to beginning
+        if (bgMusic) {
+            bgMusic.pause();
+            bgMusic.currentTime = 0;  // Reset to beginning
+        }
     };
     
     // 🎵 MOBILE SAFETY: Unlock audio on first user interaction
