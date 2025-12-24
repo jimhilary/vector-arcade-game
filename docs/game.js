@@ -16,6 +16,12 @@
 console.log('✅ game.js is loading...');
 
 /* ========================================
+   SUPABASE CONFIGURATION
+   ======================================== */
+const SUPABASE_URL = "https://teebchutupnyzcbvlowq.supabase.co";
+const SUPABASE_KEY = "sb_publishable_7CAVpenNtPVMKE-WsnPPMQ_52A51sS_";
+
+/* ========================================
    STUB FUNCTIONS (DEFINED FIRST - PREVENT CRASHES!)
    ======================================== */
 // These are safe placeholders that prevent "function not defined" errors
@@ -1554,71 +1560,63 @@ window.addEventListener('DOMContentLoaded', () => {
      * Submit score to WordPress backend via AJAX
      * PHASE 2: Data is sent but not stored yet
      */
-    function submitScore() {
-        // GitHub Pages version - no backend available
-        console.log('📊 Score submission disabled (GitHub Pages static version)');
-        console.log(`Final Score: ${window.game.score}, Level: ${window.game.level}`);
-        alert('⚠️ Score not saved\n\nThis is a static GitHub Pages version.\nThe leaderboard requires a WordPress backend.\n\nYour score: ' + window.game.score + ' points!');
-        return;
-        
-        // Original WordPress code (disabled):
-        /*
-        // Check if AJAX data is available (provided by plugin)
-        if (typeof vectorGameAjax === 'undefined') {
-            console.warn('Vector Game API: AJAX not initialized. Plugin may not be active.');
-            return;
+    /**
+     * Submit score to Supabase
+     */
+    async function submitScoreToSupabase(playerName, score, level) {
+        try {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/scores`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "apikey": SUPABASE_KEY,
+                    "Authorization": `Bearer ${SUPABASE_KEY}`,
+                    "Prefer": "return=minimal"
+                },
+                body: JSON.stringify({
+                    player_name: playerName || "Anonymous",
+                    score: Number(score),
+                    level: Number(level)
+                })
+            });
+            
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(errorText);
+            }
+            
+            console.log("✅ Score saved to Supabase");
+            return true;
+        } catch (e) {
+            console.error("❌ Score save failed:", e);
+            return false;
         }
-        
+    }
+    
+    function submitScore() {
         // Prompt player for their name
         const playerName = prompt('Game Over! Enter your name for the leaderboard:', 'Anonymous');
         
         // If player cancels, use Anonymous
         const finalName = playerName && playerName.trim() !== '' ? playerName.trim() : 'Anonymous';
         
-        // Prepare data to send
-        const scoreData = {
-            action: 'vg_submit_score',
-            nonce: vectorGameAjax.nonce,
-            score: (typeof window.game !== 'undefined' && window.game) ? window.game.score : 0,
-            player_name: finalName,
-            level: (typeof window.game !== 'undefined' && window.game) ? window.game.level : 1
-        };
+        const score = (typeof window.game !== 'undefined' && window.game) ? window.game.score : 0;
+        const level = (typeof window.game !== 'undefined' && window.game) ? window.game.level : 1;
         
-        // Send AJAX request
-        fetch(vectorGameAjax.ajaxurl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: new URLSearchParams(scoreData)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                console.log('✓ Score saved to database!', data.data);
-                
-                // Show success message in game UI
-                const messageEl = document.getElementById('game-message');
-                if (messageEl) {
-                    messageEl.textContent = `Score saved! Thanks ${finalName}! (ID: ${data.data.id})`;
-                    messageEl.style.color = '#0f0';
-                    
-                    // Reset message after 3 seconds
-                    setTimeout(() => {
-                        messageEl.textContent = 'PRESS SPACE TO RESTART';
-                        messageEl.style.color = '#0f0';
-                    }, 3000);
+        // Submit to Supabase
+        submitScoreToSupabase(finalName, score, level)
+            .then(success => {
+                if (success) {
+                    console.log(`✅ Score saved! ${finalName}: ${score} points (Level ${level})`);
+                    // Optionally show success message
+                } else {
+                    alert('Failed to save score. Please try again.');
                 }
-            } else {
-                console.error('✗ Score save failed:', data.data.message);
-                alert('Failed to save score: ' + data.data.message);
-            }
-        })
-        .catch(error => {
-            console.error('✗ AJAX error:', error);
-            alert('Network error while submitting score. Please check your connection.');
-        });
-        */
+            })
+            .catch(error => {
+                console.error('Error submitting score:', error);
+                alert('Network error while submitting score. Please check your connection.');
+            });
     }
     
     /* ========================================
@@ -2594,26 +2592,59 @@ window.addEventListener('DOMContentLoaded', () => {
     };
     
     /**
-     * Show leaderboard disabled message (GitHub Pages version)
+     * Show leaderboard disabled message (fallback)
      */
     window.showLeaderboardDisabled = function() {
-        const panel = document.getElementById('leaderboard-panel');
-        if (panel) {
-            panel.classList.add('active');
-        }
+        toggleLeaderboard();
     };
     
     /**
-     * Load leaderboard from API (disabled for GitHub Pages)
+     * Load leaderboard from Supabase
      */
-    function loadLeaderboard(filter = 'all') {
-        // GitHub Pages version - leaderboard disabled
-        console.log('📊 Leaderboard disabled (GitHub Pages static version)');
+    async function loadLeaderboard(filter = 'all') {
         const listEl = document.getElementById('leaderboard-list');
-        if (listEl) {
-            listEl.innerHTML = '<div class="loading">⚠️ Leaderboard unavailable on GitHub Pages</div>';
+        if (!listEl) return;
+        
+        listEl.innerHTML = '<div class="loading">Loading scores...</div>';
+        
+        // Update filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.filter === filter) {
+                btn.classList.add('active');
+            }
+        });
+        
+        try {
+            // Fetch top scores from Supabase
+            const res = await fetch(
+                `${SUPABASE_URL}/rest/v1/scores?select=player_name,score,level,created_at&order=score.desc&limit=20`,
+                {
+                    headers: {
+                        "apikey": SUPABASE_KEY,
+                        "Authorization": `Bearer ${SUPABASE_KEY}`
+                    }
+                }
+            );
+            
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(errorText);
+            }
+            
+            const scores = await res.json();
+            
+            if (scores && scores.length > 0) {
+                // Filter scores by time period if needed
+                let filteredScores = filterScores(scores, filter);
+                displayLeaderboard(filteredScores);
+            } else {
+                listEl.innerHTML = '<div class="loading">No scores yet. Be the first!</div>';
+            }
+        } catch (error) {
+            console.error('❌ Leaderboard load failed:', error);
+            listEl.innerHTML = '<div class="loading">Failed to load leaderboard. Please try again.</div>';
         }
-        return;
     }
     
     /**
@@ -2654,16 +2685,25 @@ window.addEventListener('DOMContentLoaded', () => {
         scores.forEach((score, index) => {
             const rank = index + 1;
             let rankClass = '';
+            let medal = '';
             
-            if (rank === 1) rankClass = 'top-1';
-            else if (rank === 2) rankClass = 'top-2';
-            else if (rank === 3) rankClass = 'top-3';
+            if (rank === 1) {
+                rankClass = 'top-1';
+                medal = '🥇';
+            } else if (rank === 2) {
+                rankClass = 'top-2';
+                medal = '🥈';
+            } else if (rank === 3) {
+                rankClass = 'top-3';
+                medal = '🥉';
+            }
             
             html += `
                 <div class="score-entry">
-                    <div class="score-rank ${rankClass}">#${rank}</div>
+                    <div class="score-rank ${rankClass}">#${rank} ${medal}</div>
                     <div class="score-player">${escapeHtml(score.player_name)}</div>
                     <div class="score-value">${parseInt(score.score).toLocaleString()}</div>
+                    <div class="score-level">Lv ${score.level || 1}</div>
                 </div>
             `;
         });

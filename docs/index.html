@@ -103,7 +103,7 @@
             <div class="welcome-nav-buttons">
                 <button class="btn-start btn-huge" onclick="showShipSelection()">▶️ START GAME</button>
                 <div class="secondary-buttons">
-                    <button class="btn-leaderboard" onclick="showLeaderboardDisabled()">📊 LEADERBOARD</button>
+                    <button class="btn-leaderboard" onclick="toggleLeaderboard()">📊 LEADERBOARD</button>
                     <button class="btn-settings" onclick="showWelcomeSettings()">⚙️ SETTINGS</button>
                 </div>
             </div>
@@ -179,22 +179,21 @@
         </div>
     </div>
 
-    <!-- Leaderboard Panel (Disabled Notice) -->
+    <!-- Leaderboard Panel -->
     <div class="leaderboard-panel" id="leaderboard-panel">
         <div class="leaderboard-content">
             <h2>🏆 LEADERBOARD</h2>
-            <div style="padding: 40px; text-align: center; color: #ff0;">
-                <p style="font-size: 24px; margin-bottom: 20px;">⚠️ Leaderboard Unavailable</p>
-                <p style="font-size: 18px; margin-bottom: 30px;">
-                    The leaderboard requires a WordPress backend with MySQL database.
-                </p>
-                <p style="font-size: 16px; color: #0f0;">
-                    This is a static GitHub Pages version. The game is fully playable, but scores cannot be saved.
-                </p>
-                <p style="font-size: 14px; color: #888; margin-top: 30px;">
-                    To use the full version with leaderboard, deploy to a WordPress hosting service.
-                </p>
+            
+            <div class="leaderboard-filters">
+                <button class="filter-btn active" data-filter="all" onclick="loadLeaderboard('all')">All Time</button>
+                <button class="filter-btn" data-filter="today" onclick="loadLeaderboard('today')">Today</button>
+                <button class="filter-btn" data-filter="week" onclick="loadLeaderboard('week')">This Week</button>
             </div>
+            
+            <div class="leaderboard-list" id="leaderboard-list">
+                <div class="loading">Loading scores...</div>
+            </div>
+            
             <button class="btn-close" onclick="toggleLeaderboard()">CLOSE</button>
         </div>
     </div>
@@ -241,7 +240,7 @@
         </p>
         <div class="game-over-actions">
             <button class="btn-restart" onclick="restartGame()">PLAY AGAIN</button>
-            <button class="btn-leaderboard" onclick="showLeaderboardDisabled()">VIEW LEADERBOARD</button>
+            <button class="btn-leaderboard" onclick="toggleLeaderboard()">VIEW LEADERBOARD</button>
         </div>
     </div>
 
