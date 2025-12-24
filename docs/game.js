@@ -276,10 +276,9 @@ window.quitGameWithConfirm = function() {
         }
         
         // 🔥 FIX: Reset all UI overlays when quitting
-        resetUIOverlays();
-        
-        // 🔥 FIX: Reset all UI overlays when quitting
-        resetUIOverlays();
+        if (typeof window.resetUIOverlays === 'function') {
+            window.resetUIOverlays();
+        }
         
         // 🎵 Stop background music when quitting
         if (typeof window.stopMusic === 'function') {
@@ -404,7 +403,9 @@ window.backToWelcome = function() {
     }
     
     // 🔥 FIX: Reset all UI overlays when returning to welcome
-    resetUIOverlays();
+    if (typeof window.resetUIOverlays === 'function') {
+        window.resetUIOverlays();
+    }
     
     // 🎵 Stop background music when returning to welcome screen
     if (typeof stopMusic === 'function') {
