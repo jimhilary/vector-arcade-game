@@ -468,6 +468,30 @@ window.addEventListener('DOMContentLoaded', () => {
     // Resize canvas if window size changes
     window.addEventListener('resize', resizeCanvas);
     
+    // 📱 MOBILE START FIX: Tap anywhere to start game
+    // This allows mobile users to tap the screen to transition from welcome/start to playing
+    canvas.addEventListener('touchstart', (e) => {
+        if (!window.game) return;
+        
+        // If we are on start screen, begin game
+        if (window.game.state === 'start') {
+            e.preventDefault();
+            if (typeof startGame === 'function') {
+                startGame();
+            }
+            return;
+        }
+        
+        // If on welcome screen, go to ship selection
+        if (window.game.state === 'welcome') {
+            e.preventDefault();
+            if (typeof window.showShipSelection === 'function') {
+                window.showShipSelection();
+            }
+            return;
+        }
+    }, { passive: false });
+    
     /* ========================================
        2. GAME STATE
        ======================================== */
