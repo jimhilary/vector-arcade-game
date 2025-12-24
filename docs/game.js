@@ -1798,10 +1798,20 @@ window.addEventListener('DOMContentLoaded', () => {
     
     // 🎵 Background music - plays only during gameplay
     // GitHub Pages version - use correct relative path
-    // Path must be relative to the HTML file location
-    const bgMusic = new Audio('./assets/audio.mp3');
-    // Note: Audio file is at docs/assets/audio.mp3
-    // On GitHub Pages: https://jimhilary.github.io/vector-arcade-game/assets/audio.mp3
+    // Try relative path first, then absolute if needed
+    let bgMusic;
+    try {
+        bgMusic = new Audio('assets/audio.mp3');
+        // Add error listener to detect 404
+        bgMusic.addEventListener('error', function(e) {
+            console.error('❌ Audio file not found at: assets/audio.mp3');
+            console.error('Expected location: https://jimhilary.github.io/vector-arcade-game/assets/audio.mp3');
+            console.warn('💡 Audio file is too large (19MB) and may not be on GitHub yet');
+        });
+    } catch (e) {
+        console.error('Failed to create Audio object:', e);
+        bgMusic = null;
+    }
     bgMusic.loop = true;  // Loop the 23-minute track
     bgMusic.volume = 0.35;  // 35% volume (subtle, not overpowering)
     bgMusic.preload = 'auto';
@@ -1815,10 +1825,15 @@ window.addEventListener('DOMContentLoaded', () => {
     // Override the stub functions with real implementations
     window.playMusic = function() {
         if (!musicEnabled) return;
+        if (!bgMusic) {
+            console.warn('⚠️ Background music not available');
+            return;
+        }
         if (bgMusic.paused) {
-            bgMusic.play().catch(() => {
-                // Browser blocked it - will retry on next user interaction
-                console.log('🎵 Music will start after user interaction');
+            bgMusic.play().catch((error) => {
+                // Browser blocked it or file not found - log for debugging
+                console.warn('🎵 Music failed to play:', error);
+                console.warn('Audio file path:', bgMusic.src);
             });
         }
     };
