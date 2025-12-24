@@ -262,6 +262,15 @@ window.quitGameWithConfirm = function() {
             gameOverScreen.style.display = 'none';
         }
         
+        // 🔥 CRITICAL FIX: Clear saved game state when quitting
+        // This prevents the game from restoring after refresh
+        try {
+            localStorage.removeItem('vectorGameState');
+            console.log('✅ Cleared saved game state from localStorage');
+        } catch (e) {
+            console.warn('Could not clear game state:', e);
+        }
+        
         // Reset game state (if game exists)
         try {
             if (typeof window.game !== 'undefined' && window.game) {
@@ -388,6 +397,15 @@ window.selectShip = function(shipNumber) {
 window.backToWelcome = function() {
     console.log('🔙 backToWelcome() called');
     
+    // 🔥 CRITICAL FIX: Clear saved game state when going back to welcome
+    // This prevents the game from restoring after refresh
+    try {
+        localStorage.removeItem('vectorGameState');
+        console.log('✅ Cleared saved game state from localStorage');
+    } catch (e) {
+        console.warn('Could not clear game state:', e);
+    }
+    
     const shipSelectionScreen = document.getElementById('ship-selection-screen');
     if (shipSelectionScreen) {
         shipSelectionScreen.style.display = 'none';
@@ -476,9 +494,19 @@ window.addEventListener('DOMContentLoaded', () => {
             const saved = localStorage.getItem('vectorGameState');
             if (saved) {
                 const state = JSON.parse(saved);
-                // Only restore if we were actually playing (not welcome screen)
-                if (state.state === 'playing' || state.state === 'paused') {
+                // 🔥 SAFER: Only restore PAUSED games, not actively playing games
+                // This prevents accidental restores after refresh during gameplay
+                // If you want to restore playing games too, change this back to:
+                // if (state.state === 'playing' || state.state === 'paused')
+                if (state.state === 'paused') {
+                    console.log('🔄 Restoring paused game from localStorage');
                     return state;
+                } else if (state.state === 'playing') {
+                    // Optional: You can restore playing games too, but it's safer not to
+                    // Uncomment the line below if you want to restore playing games
+                    // return state;
+                    console.log('⚠️ Found playing game in localStorage, but not auto-restoring (safer)');
+                    return null; // Don't auto-restore active gameplay
                 }
             }
         } catch (e) {
@@ -1809,12 +1837,22 @@ window.addEventListener('DOMContentLoaded', () => {
        ======================================== */
     
     // 🎵 Background music - plays only during gameplay
-    // Use local file from docs/assets/audio.mp3 (GitHub Pages)
+    // Hosted on Internet Archive (free, no bandwidth limits, works on GitHub Pages)
+    // 🔥 FIX: Internet Archive URLs need specific format - try multiple variations
     let bgMusic;
     let audioLoadAttempts = 0;
+    let currentUrlIndex = 0;
     const MAX_AUDIO_RETRIES = 3;
     
-    // 🔥 FIX: Initialize audio with better error handling and retry logic
+    // Try different URL formats for Internet Archive
+    const audioUrls = [
+        'https://archive.org/download/audio_20251224/audio.mp3',  // Standard format
+        'https://archive.org/download/audio_20251224/audio.mp3?download=1',  // With download param
+        'https://archive.org/download/audio_20251224/audio.mp3?download=true',  // Alternative param
+        // If all fail, we'll disable music gracefully
+    ];
+    
+    // 🔥 FIX: Initialize audio with better error handling and URL fallbacks
     function initializeAudio() {
         try {
             // If bgMusic already exists and is working, don't recreate
@@ -1822,72 +1860,70 @@ window.addEventListener('DOMContentLoaded', () => {
                 return; // Audio is already loaded
             }
             
-            // 🔥 FIX: Use relative path to local audio file (GitHub Pages)
-            // Try multiple possible paths in case of deployment differences
-            const audioPaths = [
-                'assets/audio.mp3',           // GitHub Pages root (most common)
-                './assets/audio.mp3',          // Relative from current directory
-                '/assets/audio.mp3',           // Absolute from root
-                'docs/assets/audio.mp3',       // If in subdirectory
-                './docs/assets/audio.mp3'      // Relative docs path
-            ];
+            // If we've tried all URLs, give up
+            if (currentUrlIndex >= audioUrls.length) {
+                console.error('❌ All audio URL formats failed. Music will be disabled.');
+                bgMusic = null;
+                window._bgMusic = null;
+                return;
+            }
             
-            // Track which path we're trying
-            let currentPathIndex = 0;
-            const audioPath = audioPaths[currentPathIndex];
-            
-            console.log(`🎵 Attempting to load audio from: ${audioPath}`);
+            const audioUrl = audioUrls[currentUrlIndex];
+            console.log(`🎵 Attempting to load audio from URL ${currentUrlIndex + 1}/${audioUrls.length}: ${audioUrl}`);
             
             // Create new audio object
-            bgMusic = new Audio(audioPath);
+            bgMusic = new Audio(audioUrl);
             
             // Add error listener with retry logic
-            function handleAudioError(e) {
-                audioLoadAttempts++;
-                const errorCode = bgMusic.error ? bgMusic.error.code : 'unknown';
-                const errorMessage = bgMusic.error ? bgMusic.error.message : 'Unknown error';
+            bgMusic.addEventListener('error', function(e) {
+                const error = bgMusic.error;
+                const errorCode = error ? error.code : 'unknown';
+                const errorMessage = error ? error.message : 'Unknown error';
                 
-                console.error(`❌ Audio file failed to load (attempt ${audioLoadAttempts})`);
-                console.error(`Path tried: ${audioPath}`);
-                console.error(`Error code: ${errorCode} (${errorMessage})`);
+                console.error(`❌ Audio file failed to load (attempt ${audioLoadAttempts + 1}/${MAX_AUDIO_RETRIES})`);
+                console.error(`URL tried: ${audioUrl}`);
+                console.error(`Error: ${errorMessage} (Code: ${errorCode})`);
                 
-                // Try next path if current one failed
-                if (currentPathIndex < audioPaths.length - 1) {
-                    currentPathIndex++;
-                    const nextPath = audioPaths[currentPathIndex];
-                    console.log(`🔄 Trying next audio path: ${nextPath}`);
-                    
-                    // Create new audio with next path
-                    bgMusic = new Audio(nextPath);
-                    bgMusic.loop = true;
-                    bgMusic.volume = 0.35;
-                    bgMusic.preload = 'auto';
-                    window._bgMusic = bgMusic;
-                    
-                    // Re-attach error listener
-                    bgMusic.addEventListener('error', handleAudioError);
+                // 🔥 FIX: Detect "no supported sources" error - try next URL format
+                if (errorCode === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED || 
+                    errorMessage.includes('no supported sources') ||
+                    errorMessage.includes('NotSupportedError')) {
+                    console.log('🔄 URL format not supported, trying next format...');
+                    currentUrlIndex++;
+                    audioLoadAttempts = 0; // Reset attempts for new URL
+                    setTimeout(() => {
+                        initializeAudio();
+                    }, 500);
                     return;
                 }
                 
-                // Reset path index and retry from beginning if we haven't exceeded max attempts
+                audioLoadAttempts++;
+                
+                // Retry same URL if we haven't exceeded max attempts
                 if (audioLoadAttempts < MAX_AUDIO_RETRIES) {
-                    currentPathIndex = 0; // Reset to first path
-                    console.log(`🔄 Retrying audio load from beginning in 2 seconds...`);
+                    console.log(`🔄 Retrying same URL in 2 seconds...`);
                     setTimeout(() => {
                         initializeAudio();
                     }, 2000);
                 } else {
-                    console.error('❌ Audio failed to load after multiple attempts. Music will be disabled.');
-                    console.error('💡 Make sure assets/audio.mp3 exists in your GitHub Pages deployment.');
-                    console.error('💡 Check browser Network tab to verify file is accessible.');
-                    bgMusic = null;
+                    // Try next URL format
+                    currentUrlIndex++;
+                    audioLoadAttempts = 0; // Reset for new URL
+                    if (currentUrlIndex < audioUrls.length) {
+                        console.log(`🔄 Trying next URL format...`);
+                        setTimeout(() => {
+                            initializeAudio();
+                        }, 500);
+                    } else {
+                        console.error('❌ All audio URLs failed. Music will be disabled.');
+                        bgMusic = null;
+                        window._bgMusic = null;
+                    }
                 }
-            }
-            
-            bgMusic.addEventListener('error', handleAudioError);
+            });
             
             bgMusic.addEventListener('loadeddata', function() {
-                console.log(`✅ Background music loaded successfully from: ${bgMusic.src}`);
+                console.log(`✅ Background music loaded successfully from: ${audioUrl}`);
                 audioLoadAttempts = 0; // Reset on success
             });
             
@@ -1905,7 +1941,16 @@ window.addEventListener('DOMContentLoaded', () => {
             
         } catch (e) {
             console.error('Failed to create Audio object:', e);
-            bgMusic = null;
+            // Try next URL if available
+            currentUrlIndex++;
+            if (currentUrlIndex < audioUrls.length) {
+                setTimeout(() => {
+                    initializeAudio();
+                }, 500);
+            } else {
+                bgMusic = null;
+                window._bgMusic = null;
+            }
         }
     }
     
@@ -1950,9 +1995,8 @@ window.addEventListener('DOMContentLoaded', () => {
             bgMusic.play().catch((error) => {
                 // Browser blocked it or file not found - log for debugging
                 console.warn('🎵 Music failed to play:', error);
-                console.warn('Audio file path:', bgMusic ? bgMusic.src : 'null');
-                console.warn('Audio readyState:', bgMusic ? bgMusic.readyState : 'N/A');
-                console.warn('Audio error:', bgMusic && bgMusic.error ? `Code ${bgMusic.error.code}: ${bgMusic.error.message}` : 'None');
+                console.warn('Audio file path:', bgMusic.src);
+                console.warn('Audio readyState:', bgMusic.readyState);
             });
         }
     };
