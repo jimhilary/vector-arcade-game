@@ -1944,15 +1944,23 @@ window.addEventListener('DOMContentLoaded', () => {
     };
     
     // 🔓 Unlock audio on first interaction (REQUIRED by browsers)
+    // 🔥 FIX: Also trigger lazy loading of Base64 audio
     function unlockAudio() {
         // Resume Web Audio (for SFX)
         if (audioContext.state === 'suspended') {
             audioContext.resume();
         }
         
-        if (bgMusic.paused) {
-            bgMusic.play().catch(() => {});
-        }
+        // Trigger Base64 audio loading (if not already loaded)
+        loadBase64AudioOnce();
+        
+        // Try to play music after a short delay (gives time for Base64 to load)
+        setTimeout(() => {
+            if (window._bgMusic && window._bgMusic.paused) {
+                window._bgMusic.play().catch(() => {});
+            }
+        }, 300);
+        
         window.removeEventListener('click', unlockAudio);
         window.removeEventListener('touchstart', unlockAudio);
         window.removeEventListener('pointerdown', unlockAudio);
