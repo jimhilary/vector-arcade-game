@@ -1809,8 +1809,7 @@ window.addEventListener('DOMContentLoaded', () => {
        ======================================== */
     
     // 🎵 Background music - plays only during gameplay
-    // Hosted on Internet Archive (free, no bandwidth limits, works on GitHub Pages)
-    // Direct download URL: https://archive.org/download/audio_20251224/audio.mp3
+    // Use local file from docs/assets/audio.mp3 (GitHub Pages)
     let bgMusic;
     let audioLoadAttempts = 0;
     const MAX_AUDIO_RETRIES = 3;
@@ -1819,18 +1818,49 @@ window.addEventListener('DOMContentLoaded', () => {
     function initializeAudio() {
         try {
             // If bgMusic already exists and is working, don't recreate
-            if (bgMusic && bgMusic.readyState >= 2) {
+            if (bgMusic && bgMusic.readyState >= 2 && !bgMusic.error) {
                 return; // Audio is already loaded
             }
             
+            // 🔥 FIX: Use relative path to local audio file (GitHub Pages)
+            // Try multiple possible paths in case of deployment differences
+            const audioPaths = [
+                'assets/audio.mp3',           // GitHub Pages root
+                './assets/audio.mp3',          // Relative from current directory
+                '/assets/audio.mp3',           // Absolute from root
+                'docs/assets/audio.mp3',       // If in subdirectory
+                './docs/assets/audio.mp3'      // Relative docs path
+            ];
+            
+            // Use the first path (most common for GitHub Pages)
+            const audioPath = audioPaths[0];
+            
             // Create new audio object
-            bgMusic = new Audio('https://archive.org/download/audio_20251224/audio.mp3');
+            bgMusic = new Audio(audioPath);
             
             // Add error listener with retry logic
             bgMusic.addEventListener('error', function(e) {
                 audioLoadAttempts++;
+                const errorCode = bgMusic.error ? bgMusic.error.code : 'unknown';
+                const errorMessage = bgMusic.error ? bgMusic.error.message : 'Unknown error';
+                
                 console.error(`❌ Audio file failed to load (attempt ${audioLoadAttempts}/${MAX_AUDIO_RETRIES})`);
-                console.error('URL: https://archive.org/download/audio_20251224/audio.mp3');
+                console.error(`Path tried: ${audioPath}`);
+                console.error(`Error code: ${errorCode} (${errorMessage})`);
+                
+                // Try next path if current one failed
+                if (audioLoadAttempts < audioPaths.length) {
+                    console.log(`🔄 Trying next audio path: ${audioPaths[audioLoadAttempts]}`);
+                    const nextPath = audioPaths[audioLoadAttempts];
+                    bgMusic = new Audio(nextPath);
+                    bgMusic.loop = true;
+                    bgMusic.volume = 0.35;
+                    bgMusic.preload = 'auto';
+                    window._bgMusic = bgMusic;
+                    // Re-attach error listener
+                    bgMusic.addEventListener('error', arguments.callee);
+                    return;
+                }
                 
                 // Retry loading if we haven't exceeded max attempts
                 if (audioLoadAttempts < MAX_AUDIO_RETRIES) {
@@ -1840,12 +1870,13 @@ window.addEventListener('DOMContentLoaded', () => {
                     }, 2000);
                 } else {
                     console.error('❌ Audio failed to load after multiple attempts. Music will be disabled.');
+                    console.error('💡 Make sure assets/audio.mp3 exists in your GitHub Pages deployment.');
                     bgMusic = null;
                 }
             });
             
             bgMusic.addEventListener('loadeddata', function() {
-                console.log('✅ Background music loaded successfully from Internet Archive');
+                console.log(`✅ Background music loaded successfully from: ${bgMusic.src}`);
                 audioLoadAttempts = 0; // Reset on success
             });
             
@@ -1908,8 +1939,9 @@ window.addEventListener('DOMContentLoaded', () => {
             bgMusic.play().catch((error) => {
                 // Browser blocked it or file not found - log for debugging
                 console.warn('🎵 Music failed to play:', error);
-                console.warn('Audio file path:', bgMusic.src);
-                console.warn('Audio readyState:', bgMusic.readyState);
+                console.warn('Audio file path:', bgMusic ? bgMusic.src : 'null');
+                console.warn('Audio readyState:', bgMusic ? bgMusic.readyState : 'N/A');
+                console.warn('Audio error:', bgMusic && bgMusic.error ? `Code ${bgMusic.error.code}: ${bgMusic.error.message}` : 'None');
             });
         }
     };
