@@ -278,6 +278,9 @@ window.quitGameWithConfirm = function() {
         // 🔥 FIX: Reset all UI overlays when quitting
         resetUIOverlays();
         
+        // 🔥 FIX: Reset all UI overlays when quitting
+        resetUIOverlays();
+        
         // 🎵 Stop background music when quitting
         if (typeof window.stopMusic === 'function') {
             window.stopMusic();
