@@ -1797,32 +1797,10 @@ window.addEventListener('DOMContentLoaded', () => {
        ======================================== */
     
     // 🎵 Background music - plays only during gameplay
-    // GitHub Pages version - try multiple paths
-    let bgMusic;
-    const audioPaths = [
-        'assets/audio.mp3',  // Local path
-        'https://jimhilary.github.io/vector-arcade-game/assets/audio.mp3',  // Absolute GitHub Pages path
-        window.location.origin + '/vector-arcade-game/assets/audio.mp3'  // Dynamic path
-    ];
-    
-    // Try to load audio from first available path
-    for (let path of audioPaths) {
-        try {
-            bgMusic = new Audio(path);
-            bgMusic.addEventListener('error', () => {
-                console.warn('Audio failed to load from:', path);
-            });
-            break;
-        } catch (e) {
-            console.warn('Failed to create Audio from:', path, e);
-        }
-    }
-    
-    // Fallback: create empty audio if all paths failed
-    if (!bgMusic) {
-        bgMusic = new Audio();
-        console.warn('⚠️ Background music unavailable - audio file not found');
-    }
+    // GitHub Pages version - use correct path
+    const bgMusic = new Audio('assets/audio.mp3');
+    // Note: Audio file should be at docs/assets/audio.mp3
+    // If 404 error, the file hasn't been pushed to GitHub yet (too large)
     bgMusic.loop = true;  // Loop the 23-minute track
     bgMusic.volume = 0.35;  // 35% volume (subtle, not overpowering)
     bgMusic.preload = 'auto';
