@@ -2669,11 +2669,21 @@ window.addEventListener('DOMContentLoaded', () => {
      * Quit to main menu
      */
     window.quitGame = function() {
+        // 🔥 CRITICAL FIX: Clear saved game state when quitting
+        // This prevents the game from restoring after refresh
+        try {
+            localStorage.removeItem('vectorGameState');
+            console.log('✅ Cleared saved game state from localStorage');
+        } catch (e) {
+            console.warn('Could not clear game state:', e);
+        }
+        
         // Reset everything
         if (typeof window.game !== 'undefined' && window.game) {
             window.game.score = 0;
             window.game.level = 1;
             window.game.frameCount = 0;
+            window.game.state = 'welcome';
         }
         
         // Clear arrays if they exist
@@ -2693,8 +2703,9 @@ window.addEventListener('DOMContentLoaded', () => {
             welcomeScreen.style.display = 'flex';
         }
         
-        if (typeof window.game !== 'undefined' && window.game) {
-            window.game.state = 'welcome';
+        // 🔥 FIX: Reset all UI overlays when quitting
+        if (typeof window.resetUIOverlays === 'function') {
+            window.resetUIOverlays();
         }
         
         // 🎵 Stop background music when quitting
