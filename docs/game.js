@@ -562,8 +562,12 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         
         // Restore music if game was playing
+        // 🔥 FIX: Wait a bit for audio to initialize, then play
         if (window.game.state === 'playing' && typeof window.playMusic === 'function') {
-            window.playMusic();
+            // Small delay to ensure audio is initialized
+            setTimeout(() => {
+                window.playMusic();
+            }, 100);
         }
         
         console.log(`✅ Game resumed from saved state: ${window.game.state}`);
@@ -1808,30 +1812,63 @@ window.addEventListener('DOMContentLoaded', () => {
     // Hosted on Internet Archive (free, no bandwidth limits, works on GitHub Pages)
     // Direct download URL: https://archive.org/download/audio_20251224/audio.mp3
     let bgMusic;
-    try {
-        bgMusic = new Audio('https://archive.org/download/audio_20251224/audio.mp3');
-        // Add error listener for debugging
-        bgMusic.addEventListener('error', function(e) {
-            console.error('❌ Audio file failed to load from Internet Archive');
-            console.error('URL: https://archive.org/download/audio_20251224/audio.mp3');
-        });
-        bgMusic.addEventListener('loadeddata', function() {
-            console.log('✅ Background music loaded successfully from Internet Archive');
-        });
-    } catch (e) {
-        console.error('Failed to create Audio object:', e);
-        bgMusic = null;
+    let audioLoadAttempts = 0;
+    const MAX_AUDIO_RETRIES = 3;
+    
+    // 🔥 FIX: Initialize audio with better error handling and retry logic
+    function initializeAudio() {
+        try {
+            // If bgMusic already exists and is working, don't recreate
+            if (bgMusic && bgMusic.readyState >= 2) {
+                return; // Audio is already loaded
+            }
+            
+            // Create new audio object
+            bgMusic = new Audio('https://archive.org/download/audio_20251224/audio.mp3');
+            
+            // Add error listener with retry logic
+            bgMusic.addEventListener('error', function(e) {
+                audioLoadAttempts++;
+                console.error(`❌ Audio file failed to load (attempt ${audioLoadAttempts}/${MAX_AUDIO_RETRIES})`);
+                console.error('URL: https://archive.org/download/audio_20251224/audio.mp3');
+                
+                // Retry loading if we haven't exceeded max attempts
+                if (audioLoadAttempts < MAX_AUDIO_RETRIES) {
+                    console.log(`🔄 Retrying audio load in 2 seconds...`);
+                    setTimeout(() => {
+                        initializeAudio();
+                    }, 2000);
+                } else {
+                    console.error('❌ Audio failed to load after multiple attempts. Music will be disabled.');
+                    bgMusic = null;
+                }
+            });
+            
+            bgMusic.addEventListener('loadeddata', function() {
+                console.log('✅ Background music loaded successfully from Internet Archive');
+                audioLoadAttempts = 0; // Reset on success
+            });
+            
+            bgMusic.addEventListener('canplaythrough', function() {
+                console.log('✅ Background music ready to play');
+            });
+            
+            // Set properties
+            bgMusic.loop = true;  // Loop the 23-minute track
+            bgMusic.volume = 0.35;  // 35% volume (subtle, not overpowering)
+            bgMusic.preload = 'auto';
+            
+            // Make bgMusic globally accessible
+            window._bgMusic = bgMusic;
+            
+        } catch (e) {
+            console.error('Failed to create Audio object:', e);
+            bgMusic = null;
+        }
     }
     
-    // Only set properties if bgMusic was created successfully
-    if (bgMusic) {
-        bgMusic.loop = true;  // Loop the 23-minute track
-        bgMusic.volume = 0.35;  // 35% volume (subtle, not overpowering)
-        bgMusic.preload = 'auto';
-    }
-    
-    // Make bgMusic globally accessible for stub functions
-    window._bgMusic = bgMusic;
+    // Initialize audio immediately
+    initializeAudio();
     
     // Track music state
     let musicEnabled = true;
@@ -1839,15 +1876,40 @@ window.addEventListener('DOMContentLoaded', () => {
     // Override the stub functions with real implementations
     window.playMusic = function() {
         if (!musicEnabled) return;
-        if (!bgMusic) {
-            console.warn('⚠️ Background music not available');
+        
+        // 🔥 FIX: Reinitialize audio if it's null or failed
+        if (!bgMusic || (bgMusic && bgMusic.error)) {
+            console.log('🔄 Audio not available, attempting to reinitialize...');
+            initializeAudio();
+            // Wait a bit for audio to load, then try again
+            setTimeout(() => {
+                if (bgMusic && !bgMusic.error) {
+                    window.playMusic();
+                }
+            }, 500);
             return;
         }
+        
+        // 🔥 FIX: Wait for audio to be ready before playing
+        if (bgMusic.readyState < 2) {
+            console.log('⏳ Audio still loading, waiting...');
+            bgMusic.addEventListener('canplaythrough', function playWhenReady() {
+                bgMusic.removeEventListener('canplaythrough', playWhenReady);
+                if (bgMusic.paused) {
+                    bgMusic.play().catch((error) => {
+                        console.warn('🎵 Music failed to play after loading:', error);
+                    });
+                }
+            }, { once: true });
+            return;
+        }
+        
         if (bgMusic.paused) {
             bgMusic.play().catch((error) => {
                 // Browser blocked it or file not found - log for debugging
                 console.warn('🎵 Music failed to play:', error);
                 console.warn('Audio file path:', bgMusic.src);
+                console.warn('Audio readyState:', bgMusic.readyState);
             });
         }
     };
@@ -1869,8 +1931,18 @@ window.addEventListener('DOMContentLoaded', () => {
         if (audioContext.state === 'suspended') {
             audioContext.resume();
         }
+        
+        // 🔥 FIX: Reinitialize audio if needed before playing
+        if (!bgMusic || (bgMusic && bgMusic.error)) {
+            console.log('🔄 Reinitializing audio on user interaction...');
+            initializeAudio();
+        }
+        
         // Try starting music
-        playMusic();
+        if (typeof window.playMusic === 'function') {
+            window.playMusic();
+        }
+        
         // Remove listeners after first unlock
         window.removeEventListener('pointerdown', unlockAudio);
         window.removeEventListener('touchstart', unlockAudio);
